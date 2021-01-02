@@ -1,4 +1,7 @@
 import config
+import uuid
+
+from PIL import Image
 
 from app import app
 from flask import (
@@ -6,8 +9,12 @@ from flask import (
     request,
     send_from_directory
 )
-from werkzeug.utils import secure_filename
 
+from model import (
+    store_data,
+    query_image,
+    list_data
+)
 
 @app.route("/ping")
 def hello():
@@ -30,11 +37,18 @@ def upload_file():
     type_allowed, extension = allowed_file(file.filename)
     if  not file or not type_allowed:
         return jsonify({"error": "disallowed file extension"}), 400
+    
+    image = Image.frombytes("RGB", (299, 299), file)
+    prediction, pca = query_image(image)
 
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    filename = uuid.uuid4() + "." + extension
+    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return jsonify({"status": "Success"}), 201
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
+@app.route('/analyzes')
+def analyzes():
+    return jsonify(list_data())
+
+@app.route('/image/<filename>')
+def get_image(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
