@@ -1,1 +1,6 @@
 flask
+redis
+numpy
+tensorflow
+pandas
+sklearn
