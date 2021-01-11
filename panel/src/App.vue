@@ -61,7 +61,7 @@ export default {
             width: 0.5},
             opacity: 0.8},
           type: 'scatter',
-          hovertemplate: 'Name:%{text}<br> Prediction:%{prediction}<br> Image:%{image}<br> x: %{x}<br> y: %{y}<br>',
+          hovertemplate: 'Name:%{text}<br> x: %{x}<br> y: %{y}<br>',
           name: "Predefined"
         };
         const userDefined = {
@@ -76,7 +76,7 @@ export default {
             width: 1},
             opacity: 0.8},
           type: 'scatter',
-          hovertemplate: 'Name: %{text}<br> Prediction: %{prediction}<br> Image: %{image}<br> x: %{x}<br> y: %{y}<br>',
+          hovertemplate: 'Name: %{text}<br> x: %{x}<br> y: %{y}<br>',
           name: "User Defined"
         };
 

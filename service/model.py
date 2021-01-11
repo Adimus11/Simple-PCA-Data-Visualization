@@ -27,6 +27,10 @@ def get_pca():
         pca = PCA(n_components=3)
     return pca
 
+def set_pca(inPca):
+    global pca
+    pca = inPca
+
 def load_pca():
     global pca
     with open(os.path.join(UPLOAD_FOLDER,"pca_components"), "rb+") as pca_file:
@@ -44,11 +48,16 @@ def get_features_dict(pre_final, results_dict, target):
 def get_principal_components(target_dict, features, fit=False):
     pd_results = pd.DataFrame.from_dict(target_dict)
     x = pd_results.loc[:, features].values
-    x = StandardScaler().fit_transform(x)
+    print(x)
+    #x = StandardScaler().fit_transform(x)
+    #print(x)
     if fit:
-        return get_pca().fit_transform(x)
-    else:
+        set_pca(get_pca().fit(x))
         return get_pca().transform(x)
+    else:
+        y = get_pca().transform(x)
+        print(y)
+        return y
 
 def get_predictions(image):
     arr_img = tf.keras.preprocessing.image.img_to_array(image)
@@ -120,9 +129,10 @@ def query_image(image_path, name):
     target_dict.pop("preditcions")
     features = list(target_dict.keys())
 
-    pd_results = pd.DataFrame.from_dict(target_dict)
-    x = pd_results.loc[:, features].values
     tranformed = get_principal_components(target_dict, features)
+
+    print(image_path)
+    print(preditcions, targets, tranformed)
 
     return preditcions, targets, tranformed
 
