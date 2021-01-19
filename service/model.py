@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 import uuid
 from tensorflow.keras.applications.xception import decode_predictions
-from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
 import pandas as pd
 from os import walk
 from sklearn.decomposition import PCA
@@ -24,12 +24,8 @@ pca = None
 def get_pca():
     global pca
     if pca is None:
-        pca = PCA(n_components=3)
+        pca = PCA(n_components=3, whiten=True)
     return pca
-
-def set_pca(inPca):
-    global pca
-    pca = inPca
 
 def load_pca():
     global pca
@@ -45,23 +41,18 @@ def get_features_dict(pre_final, results_dict, target):
 
     return results_dict
 
-def get_principal_components(target_dict, features, fit=False):
+def get_principal_components(target_dict, features):
     pd_results = pd.DataFrame.from_dict(target_dict)
     x = pd_results.loc[:, features].values
-    print(x)
-    #x = StandardScaler().fit_transform(x)
-    #print(x)
-    if fit:
-        set_pca(get_pca().fit(x))
-        return get_pca().transform(x)
-    else:
-        y = get_pca().transform(x)
-        print(y)
-        return y
+    x = preprocessing.normalize(x, norm='l2')
+    reduced = get_pca().transform(x)
+    reduced = preprocessing.normalize(reduced, norm='l2')
+    return reduced
 
 def get_predictions(image):
-    arr_img = tf.keras.preprocessing.image.img_to_array(image)
-    processed_img = tf.keras.applications.xception.preprocess_input(arr_img)
+    cur_img=tf.keras.preprocessing.image.img_to_array(image)
+    cur_img = tf.keras.preprocessing.image.smart_resize(cur_img, (299, 299), interpolation='bilinear')
+    processed_img = tf.keras.applications.xception.preprocess_input(cur_img)
 
     cur_predictions=image_net_model.predict(np.array([processed_img]))
     imagenet_label = decode_predictions(cur_predictions,top=1)[0][0][1]
@@ -94,7 +85,7 @@ def init_data():
             if len(filename.split(".")) < 2:
                 continue
             # image load
-            image = tf.keras.preprocessing.image.load_img(os.path.join(UPLOAD_FOLDER,filename), target_size=(299,299))
+            image = tf.keras.preprocessing.image.load_img(os.path.join(UPLOAD_FOLDER,filename))
             pre_final, prediction = get_predictions(image)
             target = filename.split("-")[0]
             results_dict = get_features_dict(pre_final, results_dict, target.title())
@@ -107,10 +98,7 @@ def init_data():
     results_dict.pop("preditcions")
     features = list(results_dict.keys())
     #Apply PCA
-    principalComponents = get_principal_components(results_dict, features, fit=True)
-
-    with open(os.path.join(UPLOAD_FOLDER,"pca_components"), "wb+") as pca_file:
-        pickle.dump(get_pca(), pca_file)
+    principalComponents = get_principal_components(results_dict, features)
 
     parsed = as_web_objects(principalComponents, targets, preditcions, files, predefined=True)
 
@@ -119,7 +107,7 @@ def init_data():
             
 
 def query_image(image_path, name):
-    image = tf.keras.preprocessing.image.load_img(os.path.join(UPLOAD_FOLDER, image_path), target_size=(299,299))
+    image = tf.keras.preprocessing.image.load_img(os.path.join(UPLOAD_FOLDER, image_path))
     pre_final, prediction = get_predictions(image)
     target_dict = get_features_dict(pre_final, {"preditcions": [prediction], "targets": []}, name)
 

@@ -19,10 +19,10 @@ from model import (
     load_pca
 )
 
+load_pca()
+
 if os.environ.get('INIT', False):
     init_data()
-else:
-    load_pca()
 
 app = Flask(__name__)
 #app.config['JSON_SORT_KEYS'] = False
